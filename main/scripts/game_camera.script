@@ -3,7 +3,7 @@ local CAMERA_Z_OFFSET = 1000
 function init(self)
 	local camera_pos = go.get_position('/go_nave')
 
-	camera_pos.y = 200
+	camera_pos.y = 480
 	camera_pos.z = CAMERA_Z_OFFSET
 	go.set_position(camera_pos, '.')
 
