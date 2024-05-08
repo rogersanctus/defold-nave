@@ -1,59 +1,41 @@
-local BACKGROUND_HEIGHT = 1080
+local my_window = require('main.scripts.my_window')
+local BACKGROUND_HEIGHT = 2048
 local SCROLL_SPEED = 300
 
 function init(self)
-	local x,y, w,h = tilemap.get_bounds('#background_tilemap')
-	factory.create('/level_factory#factory', vmath.vector3(0, BACKGROUND_HEIGHT, 0))
+	self.main_repositioned = false
+	self.complement = nil
+	_, self.SCREEN_HEIGHT = window.get_size()
 
-	self.tilemap_height = h * BACKGROUND_HEIGHT
-end
-
-function final(self)
-	-- Add finalization code here
-	-- Learn more: https://defold.com/manuals/script/
-	-- Remove this function if not needed
+	my_window:add_listener(my_window.WINDOW_RESIZE_EVENT, function() self.SCREEN_HEIGHT = my_window.height end)
 end
 
 function update(self, dt)
-	local pos = go.get_position()
+	local main_position = go.get_position('/main_level')
 
-	pos.y = pos.y - SCROLL_SPEED * dt
+	main_position.y = main_position.y - SCROLL_SPEED * dt
 
-	if pos.y <= -BACKGROUND_HEIGHT then
-		pos.y = BACKGROUND_HEIGHT
+	if self.complement == nil and main_position.y <= self.SCREEN_HEIGHT - BACKGROUND_HEIGHT * 0.5 then
+		self.complement = factory.create('/level_factory#factory', vmath.vector3(main_position.x, self.SCREEN_HEIGHT + BACKGROUND_HEIGHT * 0.5, 0))
+		self.main_repositioned = false
 	end
-	go.set_position(pos)
-end
 
-function fixed_update(self, dt)
-	-- This function is called if 'Fixed Update Frequency' is enabled in the Engine section of game.project
-	-- Can be coupled with fixed updates of the physics simulation if 'Use Fixed Timestep' is enabled in
-	-- Physics section of game.project
-	-- Add update code here
-	-- Learn more: https://defold.com/manuals/script/
-	-- Remove this function if not needed
-end
+	if self.complement ~= nil then
+		local complement_position = go.get_position(self.complement)
+		complement_position.y = complement_position.y - SCROLL_SPEED * dt
 
-function on_message(self, message_id, message, sender)
-	-- Add message-handling code here
-	-- Learn more: https://defold.com/manuals/message-passing/
-	-- Remove this function if not needed
-end
+		if not self.main_repositioned and complement_position.y <= self.SCREEN_HEIGHT - BACKGROUND_HEIGHT * 0.5 then
+			main_position.y = self.SCREEN_HEIGHT + BACKGROUND_HEIGHT * 0.5
+			self.main_repositioned = true
+		end
 
-function on_input(self, action_id, action)
-	-- Add input-handling code here. The game object this script is attached to
-	-- must have acquired input focus:
-	--
-	--    msg.post(".", "acquire_input_focus")
-	--
-	-- All mapped input bindings will be received. Mouse and touch input will
-	-- be received regardless of where on the screen it happened.
-	-- Learn more: https://defold.com/manuals/input/
-	-- Remove this function if not needed
-end
+		if complement_position.y <= -BACKGROUND_HEIGHT * 0.5 then
+			go.delete(self.complement)
+			self.complement = nil
+		end
 
-function on_reload(self)
-	-- Add reload-handling code here
-	-- Learn more: https://defold.com/manuals/hot-reload/
-	-- Remove this function if not needed
+		go.set_position(complement_position, self.complement)
+	end
+
+	go.set_position(main_position, '/main_level')
 end
