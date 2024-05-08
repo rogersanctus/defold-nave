@@ -1,7 +1,7 @@
 name: "sprite-repeat"
 tags: "tile"
 vertex_program: "/builtins/materials/sprite.vp"
-fragment_program: "/assets/sprite.fp"
+fragment_program: "/main/scripts/sprite.fp"
 vertex_space: VERTEX_SPACE_WORLD
 vertex_constants {
   name: "view_proj"

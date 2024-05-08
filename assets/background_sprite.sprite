@@ -1,5 +1,5 @@
 default_animation: "main"
-material: "/assets/sprite-repeat.material"
+material: "/main/sprite-repeat.material"
 blend_mode: BLEND_MODE_ALPHA
 textures {
   sampler: "texture_sampler"
