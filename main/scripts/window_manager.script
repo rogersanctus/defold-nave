@@ -1,0 +1,13 @@
+local my_window = require('main.scripts.my_window')
+
+local function window_event_callback(self, event, data)
+	if event == window.WINDOW_EVENT_RESIZED then
+		if my_window.width ~= data.width or my_window.height ~= data.height then
+			my_window:update_window(data.width, data.height)
+		end
+	end
+end
+
+function init(self)
+	window.set_listener(window_event_callback)
+end
