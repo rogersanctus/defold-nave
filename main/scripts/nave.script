@@ -1,8 +1,15 @@
-local SPEED = 300
+local SPEED = 500
+local LERP_FACTOR_INCREASE = {
+	x = 0.00475,
+	y = 0.004
+}
+
+local SPACE_SHIP_SIZE = {
+	x = 176,
+	y = 92
+}
 
 function init(self)
-	print('nave initiated')
-
 	msg.post('.', 'acquire_input_focus')
 
 	self.input = {
@@ -11,8 +18,18 @@ function init(self)
 		left = false,
 		right = false
 	}
-	
+
 	self.direction = {
+		x = 0,
+		y = 0
+	}
+
+	self.old_velocity = {
+		x = 0,
+		y = 0
+	}
+
+	self.lerp_factor = {
 		x = 0,
 		y = 0
 	}
@@ -23,29 +40,91 @@ function final(self)
 end
 
 function update(self, dt)
-	-- Add update code here
-	-- Learn more: https://defold.com/manuals/script/
-	-- Remove this function if not needed
 	local position = go.get_position()
 
-	position.x = position.x + self.direction.x * dt * SPEED
-	position.y = position.y + self.direction.y * dt * SPEED
-	go.set_position(position) 
-end
+	local new_vel = {
+		x = self.old_velocity.x,
+		y = self.old_velocity.y
+	}
 
-function fixed_update(self, dt)
-	-- This function is called if 'Fixed Update Frequency' is enabled in the Engine section of game.project
-	-- Can be coupled with fixed updates of the physics simulation if 'Use Fixed Timestep' is enabled in
-	-- Physics section of game.project
-	-- Add update code here
-	-- Learn more: https://defold.com/manuals/script/
-	-- Remove this function if not needed
-end
+	local target_vel = {
+		x = self.direction.x * SPEED,
+		y = self.direction.y * SPEED
+	}
 
-function on_message(self, message_id, message, sender)
-	-- Add message-handling code here
-	-- Learn more: https://defold.com/manuals/message-passing/
-	-- Remove this function if not needed
+	-- X velocity
+	if target_vel.x ~= self.old_velocity.x then
+		self.lerp_factor.x = self.lerp_factor.x + LERP_FACTOR_INCREASE.x
+
+		if self.lerp_factor.x >= 1 then
+			self.lerp_factor.x = 1
+		end
+
+		local start = self.old_velocity.x
+		local ending = target_vel.x
+		new_vel_x = vmath.lerp(self.lerp_factor.x, start, ending)
+	end
+
+	if self.lerp_factor.x == 1 then
+		self.old_velocity.x = target_vel.x
+		self.lerp_factor.x = 0
+	end
+
+	-- Y velocity
+	if target_vel.y ~= self.old_velocity.y then
+		self.lerp_factor.y = self.lerp_factor.y + LERP_FACTOR_INCREASE.y
+
+		if self.lerp_factor.y >= 1 then
+			self.lerp_factor.y = 1
+		end
+
+		local start = self.old_velocity.y
+		local ending = target_vel.y
+		new_vel_y = vmath.lerp(self.lerp_factor.y, start, ending)
+	end
+
+	if self.lerp_factor.y == 1 then
+		self.old_velocity.y = target_vel.y
+		self.lerp_factor.y = 0
+	end
+
+	position.x = position.x + new_vel.x * dt
+	position.y = position.y + new_vel.y * dt
+
+	local anim = 'idle'
+
+	if self.direction.x == -1 then
+		anim = 'left'
+	elseif self.direction.x == 1 then
+		anim = 'right'
+	else
+		anim = 'idle'
+	end
+
+	sprite.play_flipbook('#nave', anim)
+
+	-- Keep spacehip inside screen area
+	if position.x < SPACE_SHIP_SIZE.x/2 then
+		position.x = SPACE_SHIP_SIZE.x/2
+		self.old_velocity.x = 0
+	end
+
+	if position.x > 960 - SPACE_SHIP_SIZE.x/2 then
+		position.x = 960 - SPACE_SHIP_SIZE.x/2
+		self.old_velocity.x = 0
+	end
+
+	if position.y < SPACE_SHIP_SIZE.y/2 then
+		position.y = SPACE_SHIP_SIZE.y/2
+		self.old_velocity.y = 0
+	end
+
+	if position.y > 640 - SPACE_SHIP_SIZE.y/2 then
+		position.y = 640 - SPACE_SHIP_SIZE.y/2
+		self.old_velocity.y = 0
+	end
+
+	go.set_position(position)
 end
 
 function on_input(self, action_id, action)
