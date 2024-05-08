@@ -1,12 +1,24 @@
+local my_window = require('main.scripts.my_window')
+
 local CAMERA_Z_OFFSET = 1000
 
+local function adjust_size(self)
+	local camera_pos = vmath.vector3(self.followee_pos.x, my_window.height/2, CAMERA_Z_OFFSET)
+	go.set_position(camera_pos, '/go_camera')
+	local url = msg.url('.')
+
+	print('url', url)
+end
+
 function init(self)
-	local camera_pos = go.get_position('/go_nave')
+	my_window:add_listener(my_window.WINDOW_RESIZE_EVENT, function() adjust_size(self) end)
 
-	camera_pos.y = 480
-	camera_pos.z = CAMERA_Z_OFFSET
-	go.set_position(camera_pos, '.')
+	self.followee_pos = go.get_position('/go_nave')
+	_, self.window_height = window.get_size()
 
+	adjust_size(self)
+
+	msg.post('@render:', 'use_fixed_projection')
 	msg.post('@render:', 'use_camera_projection')
 	msg.post('#game_camera', 'acquire_camera_focus')
 end
